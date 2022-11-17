@@ -10,7 +10,7 @@ interface UnpackOptions {
     dir: string;
     debug: boolean;
     archive: string;
-    build: number;
+    build: string;
 }
 
 
@@ -24,8 +24,8 @@ const unpackerArgumentOptions: ArgumentOptions = {
         description: `The archive to index. Defaults to 'main', which will unpack and index all store archives one by one. Specify an archive name to unpack a single archive.`
     },
     build: {
-        alias: 'b', type: 'number', default: 435,
-        description: `The game version that the store should belong to, also known as the game build number. Defaults to '435', a game build from late October, 2006.`
+        alias: 'b', type: 'string', default: '435',
+        description: `The game build (revision) that the store should belong to, also known as the game build number. Defaults to '435', a game build from late October, 2006.`
     },
     debug: {
         type: 'boolean', default: false,
@@ -40,52 +40,48 @@ async function unpackFiles(store: Store, args: UnpackOptions): Promise<void> {
 
     const { archive: archiveName, debug } = args;
 
-    try {
-        store.loadPackedStore();
+    store.loadPackedStore();
 
-        if(archiveName === 'main') {
-            logger.info(`Unpacking JS5 file store with arguments:`, argDebugString);
+    if(archiveName === 'main') {
+        logger.info(`Unpacking JS5 file store with arguments:`, argDebugString);
 
-            store.decode(true);
+        store.decode(true);
 
-            store.encode(true);
-            store.compress(true);
+        store.encode(true);
+        store.compress(true);
 
-            if(!debug) {
-                store.write();
-            } else {
-                logger.info(`Flat file store writing is disabled in debug mode.`);
-            }
-
-            logger.info(`Decoding completed.`);
-
-            await store.saveIndexData(true, true, true);
+        if(!debug) {
+            store.write();
         } else {
-            logger.info(`Unpacking JS5 archive with arguments:`, argDebugString);
-
-            const a = store.find(archiveName);
-
-            if(!a) {
-                throw new Error(`Archive ${ a } was not found.`);
-            }
-
-            a.decode(true);
-
-            a.encode(true);
-            a.compress(true);
-
-            if(!debug) {
-                a.write();
-            } else {
-                logger.info(`Archive writing is disabled in debug mode.`);
-            }
-
-            logger.info(`Decoding completed.`);
-
-            await a.saveIndexData(true, true);
+            logger.info(`Flat file store writing is disabled in debug mode.`);
         }
-    } catch(error) {
-        logger.error(error);
+
+        logger.info(`Decoding completed.`);
+
+        await store.saveIndexData(true, true, true);
+    } else {
+        logger.info(`Unpacking JS5 archive with arguments:`, argDebugString);
+
+        const a = store.find(archiveName);
+
+        if(!a) {
+            throw new Error(`Archive ${ a } was not found.`);
+        }
+
+        a.decode(true);
+
+        a.encode(true);
+        a.compress(true);
+
+        if(!debug) {
+            a.write();
+        } else {
+            logger.info(`Archive writing is disabled in debug mode.`);
+        }
+
+        logger.info(`Decoding completed.`);
+
+        await a.saveIndexData(true, true);
     }
 }
 
